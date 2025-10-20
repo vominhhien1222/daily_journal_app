@@ -1,55 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/journal_provider.dart';
+//import 'providers/journal_provider.dart';
 import 'providers/settings_provider.dart';
 import 'routes.dart';
-import 'vintage_theme.dart'; // 🔹 thêm dòng này để dùng theme giấy cũ
+import 'theme/vintage_theme.dart'; // 🌿 Theme giấy cũ (light + dark)
 
 class App extends StatelessWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => SettingsProvider()..loadDefaults(),
-        ),
-        ChangeNotifierProvider(create: (_) => JournalProvider()..loadInitial()),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Daily Journal ☕',
-        themeMode: context.watch<SettingsProvider>().themeMode,
+    final settings = context.watch<SettingsProvider>();
 
-        // 🔹 Theme giấy cũ (vintage)
-        theme: vintageTheme,
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Daily Journal ☕',
 
-        // 🔹 Dark theme (tối giản, nâu đậm)
-        darkTheme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: const Color(0xFF3B2F2F),
-          textTheme: const TextTheme(
-            bodyMedium: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF5D4037),
-            titleTextStyle: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-            ),
-            iconTheme: IconThemeData(color: Colors.white),
-          ),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            backgroundColor: Color(0xFF795548),
-            foregroundColor: Colors.white,
-          ),
-        ),
+      // 🌙 Cho phép đổi theme sáng/tối theo SettingsProvider
+      themeMode: settings.themeMode,
 
-        // 🔹 Route setup
-        initialRoute: AppRoutes.home,
-        onGenerateRoute: AppRoutes.onGenerateRoute,
-      ),
+      // 🌿 Giao diện giấy cũ (ban ngày)
+      theme: vintageLightTheme,
+
+      // 🌑 Giao diện vintage đêm (nâu trầm)
+      darkTheme: vintageDarkTheme,
+
+      // 🔹 Route setup
+      initialRoute: AppRoutes.home,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
 }

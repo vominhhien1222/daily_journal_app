@@ -1,6 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart'; // ✅ thêm dòng này
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -12,6 +12,7 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _fln =
       FlutterLocalNotificationsPlugin();
 
+  /// 🔹 Khởi tạo plugin
   Future<void> init() async {
     if (kIsWeb) return;
 
@@ -38,11 +39,10 @@ class NotificationService {
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
 
-    // Android 13 trở lên: cần quyền POST_NOTIFICATIONS (nếu cần)
-    // ⚠️ Nếu muốn xin quyền thủ công, dùng package: permission_handler
+    // Android 13+: quyền POST_NOTIFICATIONS → plugin sẽ tự xử lý
   }
 
-  /// 🔔 Lên lịch nhắc hằng ngày
+  /// 🔔 Lên lịch nhắc hằng ngày (21:00 mặc định)
   Future<void> scheduleDaily({required int hour, required int minute}) async {
     if (kIsWeb) return;
 
@@ -72,7 +72,7 @@ class NotificationService {
       await _fln.zonedSchedule(
         1001,
         'Nhật ký hôm nay ☕',
-        'Viết vài dòng về cảm xúc trong ngày nhé.',
+        'Viết vài dòng về cảm xúc trong ngày nhé 💌',
         next,
         details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -82,11 +82,11 @@ class NotificationService {
       );
     } on PlatformException catch (e) {
       if (e.code == 'exact_alarms_not_permitted') {
-        // 🔸 Nếu không có quyền exact alarm → fallback sang show định kỳ
+        // Nếu không có quyền exact alarm → fallback sang định kỳ
         await _fln.periodicallyShow(
           1001,
           'Nhật ký hôm nay ☕',
-          'Đừng quên ghi lại cảm xúc của bạn nhé 💌',
+          'Đừng quên ghi lại cảm xúc của bạn nhé 💭',
           RepeatInterval.daily,
           details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -97,8 +97,21 @@ class NotificationService {
     }
   }
 
+  /// ❌ Hủy thông báo đã lên lịch
   Future<void> cancelDaily() async {
     if (kIsWeb) return;
     await _fln.cancel(1001);
+  }
+
+  // ---------------------------------------------------------------------------
+  // ✅ Wrapper cho tương thích với SettingsProvider cũ
+  // ---------------------------------------------------------------------------
+
+  Future<void> scheduleDailyReminder({int hour = 21, int minute = 0}) async {
+    return scheduleDaily(hour: hour, minute: minute);
+  }
+
+  Future<void> cancelAll() async {
+    return cancelDaily();
   }
 }

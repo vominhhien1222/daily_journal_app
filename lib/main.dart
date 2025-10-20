@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:io' show Platform;
 
 import 'data/models/journal_entry.dart';
 import 'data/hive_boxes.dart';
@@ -14,23 +15,31 @@ import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
 
-  if (!Hive.isAdapterRegistered(0)) {
+  // ✅ Hive
+  await Hive.initFlutter();
+  if (!Hive.isAdapterRegistered(JournalEntryAdapter().typeId)) {
     Hive.registerAdapter(JournalEntryAdapter());
   }
   await HiveBoxes.openAll();
 
+  // 🕒 Timezone
   tz.initializeTimeZones();
 
-  // ✅ Chỉ khởi tạo Notification khi không chạy Web
-  if (!kIsWeb) {
+  // 🔔 Notification
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     await NotificationService.instance.init();
     await NotificationService.instance.scheduleDaily(hour: 21, minute: 0);
   }
 
-  if (await Permission.scheduleExactAlarm.isDenied) {
-    await openAppSettings(); // hoặc Permission.scheduleExactAlarm.request();
+  // 🔐 Permission
+  final status = await Permission.scheduleExactAlarm.status;
+
+  if (status.isDenied) {
+    // await Permission.scheduleExactAlarm.request();
+  } else if (status.isPermanentlyDenied) {
+    debugPrint("⚠️ Quyền scheduleExactAlarm bị tắt. Bỏ qua để app vẫn chạy.");
+    // Hoặc hiển thị thông báo cho user bằng dialog nếu bạn muốn
   }
 
   runApp(
