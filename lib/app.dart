@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/journal_provider.dart';
 import 'providers/settings_provider.dart';
 import 'routes.dart';
+import 'vintage_theme.dart'; // 🔹 thêm dòng này để dùng theme giấy cũ
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -18,13 +19,34 @@ class App extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Daily Journal & Mood',
+        title: 'Daily Journal ☕',
         themeMode: context.watch<SettingsProvider>().themeMode,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: const Color(0xFF6C63FF),
+
+        // 🔹 Theme giấy cũ (vintage)
+        theme: vintageTheme,
+
+        // 🔹 Dark theme (tối giản, nâu đậm)
+        darkTheme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: const Color(0xFF3B2F2F),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF5D4037),
+            titleTextStyle: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+            ),
+            iconTheme: IconThemeData(color: Colors.white),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: Color(0xFF795548),
+            foregroundColor: Colors.white,
+          ),
         ),
-        darkTheme: ThemeData.dark(),
+
+        // 🔹 Route setup
         initialRoute: AppRoutes.home,
         onGenerateRoute: AppRoutes.onGenerateRoute,
       ),

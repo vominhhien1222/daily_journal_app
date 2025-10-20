@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -6,22 +7,29 @@ import 'package:timezone/timezone.dart' as tz;
 class NotificationService {
   NotificationService._();
   static final instance = NotificationService._();
+
   final _fln = FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
+    // ❗ Nếu đang chạy trên web → bỏ qua (web không hỗ trợ plugin này)
+    if (kIsWeb) return;
+
     tz.initializeTimeZones();
-    // Android
+
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    // iOS
+
     const ios = DarwinInitializationSettings(
       requestSoundPermission: true,
       requestAlertPermission: true,
       requestBadgePermission: true,
     );
-    const init = InitializationSettings(android: android, iOS: ios);
-    await _fln.initialize(init);
 
-    if (Platform.isIOS) {
+    const initSettings = InitializationSettings(android: android, iOS: ios);
+
+    await _fln.initialize(initSettings);
+
+    // ✅ Chỉ xin quyền trên iOS thật (không phải web)
+    if (!kIsWeb && Platform.isIOS) {
       await _fln
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin
@@ -30,12 +38,16 @@ class NotificationService {
     }
   }
 
+  /// 🔔 Đặt lịch nhắc hằng ngày
   Future<void> scheduleDaily({required int hour, required int minute}) async {
+    // Nếu đang chạy Web thì bỏ qua
+    if (kIsWeb) return;
+
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         'daily_journal_channel',
         'Daily Journal',
-        channelDescription: 'Nhắc bạn viết nhật ký hằng ngày',
+        channelDescription: 'Nhắc bạn viết nhật ký hằng ngày ☕',
         importance: Importance.max,
         priority: Priority.high,
       ),
@@ -62,9 +74,13 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // lặp daily
+      matchDateTimeComponents: DateTimeComponents.time, // 🔁 Lặp mỗi ngày
     );
   }
 
-  Future<void> cancelDaily() async => _fln.cancel(1001);
+  /// ❌ Hủy lịch nhắc
+  Future<void> cancelDaily() async {
+    if (kIsWeb) return;
+    await _fln.cancel(1001);
+  }
 }
