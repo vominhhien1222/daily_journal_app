@@ -45,5 +45,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+<array>
+  <string>fetch</string>
+  <string>remote-notification</string>
+</array>
+<key>FirebaseAppDelegateProxyEnabled</key><false/>
+<key>NSCalendarsUsageDescription</key><string>Schedule reminders</string>
+<key>NSUserNotificationUsageDescription</key><string>We use notifications to remind journaling.</string>
+
 </dict>
 </plist>
