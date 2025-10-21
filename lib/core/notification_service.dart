@@ -1,9 +1,12 @@
+// lib/core/notification_service.dart
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+// 👇 Thêm import này để lấy câu nhắc ngẫu nhiên
+import 'prompts.dart';
 
 class NotificationService {
   NotificationService._();
@@ -12,11 +15,11 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _fln =
       FlutterLocalNotificationsPlugin();
 
-  /// 🔹 Khởi tạo plugin
+  /// Khởi tạo plugin thông báo
   Future<void> init() async {
     if (kIsWeb) return;
 
-    tz.initializeTimeZones();
+    tz.initializeTimeZones(); // nạp dữ liệu muối giờ
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
@@ -25,8 +28,8 @@ class NotificationService {
       requestBadgePermission: true,
     );
     const initSettings = InitializationSettings(
-      android: androidInit,
-      iOS: iosInit,
+      android: androidInit, // androi
+      iOS: iosInit, // ios
     );
 
     await _fln.initialize(initSettings);
@@ -39,10 +42,10 @@ class NotificationService {
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
 
-    // Android 13+: quyền POST_NOTIFICATIONS → plugin sẽ tự xử lý
+    // Android 13+: POST_NOTIFICATIONS (plugin tự xử lý nếu cần).
   }
 
-  /// 🔔 Lên lịch nhắc hằng ngày (21:00 mặc định)
+  //  Lên lịch nhắc hằng ngày
   Future<void> scheduleDaily({required int hour, required int minute}) async {
     if (kIsWeb) return;
 
@@ -68,11 +71,14 @@ class NotificationService {
     );
     if (next.isBefore(now)) next = next.add(const Duration(days: 1));
 
+    // 🌿 Lấy 1 câu quote ngẫu nhiên làm nội dung thông báo
+    final quote = Prompts.randomQuote();
+
     try {
       await _fln.zonedSchedule(
         1001,
         'Nhật ký hôm nay ☕',
-        'Viết vài dòng về cảm xúc trong ngày nhé 💌',
+        quote, // dùng quote thay vì text cố định
         next,
         details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -82,11 +88,11 @@ class NotificationService {
       );
     } on PlatformException catch (e) {
       if (e.code == 'exact_alarms_not_permitted') {
-        // Nếu không có quyền exact alarm → fallback sang định kỳ
+        // Nếu không có quyền exact alarm → fallback sang nhắc định kỳ (inexact)
         await _fln.periodicallyShow(
           1001,
           'Nhật ký hôm nay ☕',
-          'Đừng quên ghi lại cảm xúc của bạn nhé 💭',
+          quote, // vẫn dùng quote
           RepeatInterval.daily,
           details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

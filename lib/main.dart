@@ -29,7 +29,11 @@ Future<void> main() async {
   // 🔔 Notification
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     await NotificationService.instance.init();
-    await NotificationService.instance.scheduleDaily(hour: 21, minute: 0);
+    final now = DateTime.now();
+    await NotificationService.instance.scheduleDaily(
+      hour: now.hour,
+      minute: now.minute + 1, // test sau 1 phút
+    );
   }
 
   // 🔐 Permission
