@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-//import 'providers/journal_provider.dart';
 import 'providers/settings_provider.dart';
 import 'routes.dart';
-import 'theme/vintage_theme.dart'; // 🌿 Theme giấy cũ (light + dark)
+import 'theme/vintage_theme.dart';
+import 'ui/screens/splash_screen.dart'; // 🌸 Thêm dòng này
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -25,8 +25,8 @@ class App extends StatelessWidget {
       // 🌑 Giao diện vintage đêm (nâu trầm)
       darkTheme: vintageDarkTheme,
 
-      // 🔹 Route setup
-      initialRoute: AppRoutes.home,
+      // 🔹 Gọi SplashScreen trước
+      home: const SplashScreen(),
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }

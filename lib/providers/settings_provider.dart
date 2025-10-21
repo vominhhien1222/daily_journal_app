@@ -88,4 +88,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// 🔹 Áp dụng theme cho toàn app
   ThemeMode get themeMode => _darkMode ? ThemeMode.dark : ThemeMode.light;
+
+  /// 🌙 Kiểm tra đang ở Dark Mode không (dùng cho SplashScreen)
+  bool get isDarkMode => _darkMode;
 }

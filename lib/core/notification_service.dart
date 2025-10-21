@@ -113,7 +113,7 @@ class NotificationService {
   // ✅ Wrapper cho tương thích với SettingsProvider cũ
   // ---------------------------------------------------------------------------
 
-  Future<void> scheduleDailyReminder({int hour = 21, int minute = 0}) async {
+  Future<void> scheduleDailyReminder({int hour = 11, int minute = 0}) async {
     return scheduleDaily(hour: hour, minute: minute);
   }
 
