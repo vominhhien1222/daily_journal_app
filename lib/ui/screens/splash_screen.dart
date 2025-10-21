@@ -59,8 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
             children: [
               // 🐾 Logo hoặc hình biểu tượng vintage
               Image.asset(
-                'assets/images/diary_logo.png', // 🪶 Thay bằng logo pastel bạn muốn
-                width: 120,
+                'assets/images/diary_logo.png', // logo
               ),
               const SizedBox(height: 20),
               Text(

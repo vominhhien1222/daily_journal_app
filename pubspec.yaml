@@ -39,3 +39,4 @@ flutter:
   assets:
     - assets/textures/paper.jpg
     - assets/textures/noise.png
+    - assets/images/diary_logo.png
