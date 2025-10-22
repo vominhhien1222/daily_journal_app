@@ -67,9 +67,7 @@ class NotificationService {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // 🕒 Lên lịch nhắc hằng ngày
-  // ---------------------------------------------------------------------------
+  ///        Lên lịch thông báo hằng ngày vào giờ phút cụ thể
   Future<void> scheduleDaily({required int hour, required int minute}) async {
     if (kIsWeb) return;
 

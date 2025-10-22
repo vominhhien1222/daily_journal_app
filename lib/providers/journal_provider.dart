@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../data/models/journal_entry.dart';
 import '../repositories/journal_repository.dart';
+import '../core/emotion_analyzer.dart'; // 👈 Thêm dòng này để dùng phân tích cảm xúc
 
 class JournalProvider extends ChangeNotifier {
   final JournalRepository _repo = JournalRepository();
@@ -21,17 +22,22 @@ class JournalProvider extends ChangeNotifier {
     await loadEntries();
   }
 
-  /// 🟢 Thêm nhật ký
-  Future<void> addEntry(String title, String content, String mood) async {
+  /// 🟢 Thêm nhật ký (tự động phân tích cảm xúc)
+  Future<void> addEntry(String title, String content) async {
+    // 🧠 Phân tích cảm xúc tự động từ nội dung
+    final mood = EmotionAnalyzer.analyze(content);
+
     final entry = JournalEntry(
       id: const Uuid().v4(),
       title: title,
       content: content,
       date: DateTime.now(),
-      mood: mood,
+      mood: mood, // ✅ Lưu cảm xúc vào entry
     );
+
     await _repo.addEntry(entry);
     _entries.insert(0, entry);
+
     notifyListeners();
   }
 
