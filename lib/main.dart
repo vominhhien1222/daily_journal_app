@@ -16,36 +16,36 @@ import 'app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Hive
   await Hive.initFlutter();
   if (!Hive.isAdapterRegistered(JournalEntryAdapter().typeId)) {
     Hive.registerAdapter(JournalEntryAdapter());
   }
   await HiveBoxes.openAll();
 
-  // 🕒 Timezone
   tz.initializeTimeZones();
 
-  // 🔔 Notification
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    final notiPermission = await Permission.notification.request();
+    if (notiPermission.isDenied || notiPermission.isPermanentlyDenied) {
+      debugPrint("⚠️ Người dùng chưa cấp quyền thông báo.");
+    }
+
     await NotificationService.instance.init();
-    final now = DateTime.now();
-    await NotificationService.instance.scheduleDaily(
-      hour: now.hour,
-      minute: now.minute + 1, // test sau 1 phút
-    );
+
+    //  Test thông báo sau 1 phút
+    try {
+      final now = DateTime.now();
+      await NotificationService.instance.scheduleDaily(
+        hour: now.hour,
+        minute: (now.minute + 1) % 60, // test sau 1 phút
+      );
+      debugPrint(" Đã lên lịch test notification sau 1 phút.");
+    } catch (e) {
+      debugPrint("Lỗi khi test notification: $e");
+    }
   }
 
-  // 🔐 Permission
-  final status = await Permission.scheduleExactAlarm.status;
-
-  if (status.isDenied) {
-    // await Permission.scheduleExactAlarm.request();
-  } else if (status.isPermanentlyDenied) {
-    debugPrint("⚠️ Quyền scheduleExactAlarm bị tắt. Bỏ qua để app vẫn chạy.");
-    // Hoặc hiển thị thông báo cho user bằng dialog nếu bạn muốn
-  }
-
+  // Chạy ứng dụng
   runApp(
     MultiProvider(
       providers: [
