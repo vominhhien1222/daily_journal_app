@@ -3,10 +3,22 @@ import 'package:provider/provider.dart';
 import 'providers/settings_provider.dart';
 import 'routes.dart';
 import 'theme/vintage_theme.dart';
-import 'ui/screens/splash_screen.dart'; // 🌸 Thêm dòng này
+import 'ui/screens/splash_screen.dart';
+import 'ui/screens/pin_screen.dart';
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  bool _authenticated = false;
+
+  void _onAuthenticated() {
+    setState(() => _authenticated = true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,19 +27,14 @@ class App extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Daily Journal ☕',
-
-      // 🌙 Cho phép đổi theme sáng/tối theo SettingsProvider
       themeMode: settings.themeMode,
-
-      // 🌿 Giao diện giấy cũ (ban ngày)
       theme: vintageLightTheme,
-
-      // 🌑 Giao diện vintage đêm (nâu trầm)
       darkTheme: vintageDarkTheme,
-
-      // 🔹 Gọi SplashScreen trước
-      home: const SplashScreen(),
       onGenerateRoute: AppRoutes.onGenerateRoute,
+
+      home: _authenticated
+          ? const SplashScreen()
+          : PinScreen(onAuthenticated: _onAuthenticated),
     );
   }
 }

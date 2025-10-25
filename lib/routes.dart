@@ -4,16 +4,20 @@ import 'ui/screens/home_screen.dart';
 import 'ui/screens/editor_screen.dart';
 import 'ui/screens/detail_screen.dart';
 import 'ui/screens/settings_screen.dart';
+import 'ui/screens/login_screen.dart';
+import 'ui/screens/register_screen.dart';
 
 class AppRoutes {
   static const String home = '/';
   static const String editor = '/editor';
   static const String detail = '/detail';
   static const String settings = '/settings';
+  static const String login = '/login';
+  static const String register = '/register';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case AppRoutes.home: // ✅ dùng tên class đầy đủ
+      case AppRoutes.home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
 
       case AppRoutes.editor:
@@ -28,6 +32,12 @@ class AppRoutes {
 
       case AppRoutes.settings:
         return MaterialPageRoute(builder: (_) => const SettingsScreen());
+
+      case AppRoutes.login:
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
+
+      case AppRoutes.register:
+        return MaterialPageRoute(builder: (_) => const RegisterScreen());
 
       default:
         return _errorRoute('404 – Page not found 🚫');
