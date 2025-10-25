@@ -6,14 +6,49 @@ import '../../../providers/journal_provider.dart';
 import '../../../data/models/journal_entry.dart';
 import 'editor_screen.dart';
 import 'detail_screen.dart';
+import '../../../core/cloud_sync_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _autoSyncCloud();
+  }
+
+  /// ☁️ Tự động đồng bộ dữ liệu khi mở app
+  Future<void> _autoSyncCloud() async {
+    setState(() => _isSyncing = true);
+    try {
+      await CloudSyncService().syncAll();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('☁️ Đã đồng bộ thành công!'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Lỗi khi đồng bộ: $e");
+    } finally {
+      setState(() => _isSyncing = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final journalProvider = Provider.of<JournalProvider>(context);
-    final theme = Theme.of(context); // 🔹 Lấy màu từ theme vintage
+    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -30,6 +65,15 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
         actions: [
+          if (_isSyncing)
+            const Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
           IconButton(
             icon: Icon(
               Icons.settings,
@@ -70,6 +114,7 @@ class HomeScreen extends StatelessWidget {
             ),
           );
           journalProvider.loadEntries();
+          await _autoSyncCloud(); // ✅ tự đồng bộ lại sau khi thêm nhật ký
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
