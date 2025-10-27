@@ -16,9 +16,8 @@ class EditorScreen extends StatefulWidget {
 }
 
 class _EditorScreenState extends State<EditorScreen> {
-  final _titleController = TextEditingController();
   final _contentController = TextEditingController();
-  String? _selectedMood; // 👈 người dùng chọn cảm xúc
+  String? _selectedMood;
 
   bool get isEditing => widget.entry != null;
 
@@ -26,25 +25,29 @@ class _EditorScreenState extends State<EditorScreen> {
   void initState() {
     super.initState();
     if (isEditing) {
-      _titleController.text = widget.entry!.title;
       _contentController.text = widget.entry!.content;
       _selectedMood = widget.entry!.mood;
     }
   }
 
   Future<void> _saveEntry() async {
+    FocusScope.of(context).unfocus();
+
     final provider = Provider.of<JournalProvider>(context, listen: false);
-    final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
-    if (title.isEmpty || content.isEmpty) {
+    if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('⚠️ Vui lòng nhập tiêu đề và nội dung')),
+        const SnackBar(content: Text('⚠️ Vui lòng nhập nội dung nhật ký')),
       );
       return;
     }
 
-    // 🧠 Nếu người dùng không chọn, để AI phân tích
+    // 🧠 Tự lấy dòng đầu tiên làm tiêu đề ngầm (nếu muốn hiển thị ngoài danh sách)
+    final title = content.split('\n').first.trim().isEmpty
+        ? '(Không tiêu đề)'
+        : content.split('\n').first.trim();
+
     final mood = _selectedMood ?? EmotionAnalyzer.analyze(content);
     final aiMessage = AiResponder.respond(mood);
 
@@ -59,7 +62,6 @@ class _EditorScreenState extends State<EditorScreen> {
       await provider.addEntry(title, content);
     }
 
-    // 💬 Hiển thị hộp thoại phản hồi động viên
     if (mounted) {
       showDialog(
         context: context,
@@ -78,8 +80,8 @@ class _EditorScreenState extends State<EditorScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // đóng dialog
-                Navigator.pop(context); // quay lại màn trước
+                Navigator.pop(context);
+                Navigator.pop(context);
               },
               child: const Text('Đóng'),
             ),
@@ -89,7 +91,6 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  // 🧩 Nút chọn cảm xúc
   Widget _buildMoodButton(String emoji, String mood) {
     final isSelected = _selectedMood == mood;
     return GestureDetector(
@@ -113,93 +114,125 @@ class _EditorScreenState extends State<EditorScreen> {
   @override
   Widget build(BuildContext context) {
     final suggestions = PromptSuggestions.randomSuggestions();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(isEditing ? 'Chỉnh sửa nhật ký' : 'Thêm nhật ký'),
         actions: [
-          IconButton(icon: const Icon(Icons.save), onPressed: _saveEntry),
+          TextButton(
+            onPressed: _saveEntry,
+            child: Text(
+              'Lưu',
+              style: TextStyle(
+                color:
+                    Theme.of(context).appBarTheme.iconTheme?.color ??
+                    Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 💡 Gợi ý viết
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.amber.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber.shade100),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "💡 Gợi ý hôm nay:",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 💡 Gợi ý viết
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF3B2A24)
+                              : const Color(0xFFFFF9F2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFFC19A6B)
+                                : const Color(0xFFBCA48B),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "💡 Gợi ý hôm nay:",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? const Color(0xFFF2E4C7)
+                                    : const Color(0xFF5C4033),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            for (final s in suggestions)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  "• $s",
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? const Color(0xFFE8D8C3)
+                                        : const Color(0xFF3E2723),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Chọn cảm xúc thủ công
+                      const Text(
+                        "Tâm trạng hôm nay:",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildMoodButton('😊', 'Tích cực 😊'),
+                          _buildMoodButton('😢', 'Tiêu cực 😞'),
+                          _buildMoodButton('😐', 'Bình thường 😌'),
+                          _buildMoodButton('😠', 'Bực 😠'),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Ô nhập nội dung
+                      Expanded(
+                        child: TextField(
+                          controller: _contentController,
+                          onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          decoration: const InputDecoration(
+                            labelText: 'Nội dung nhật ký',
+                            alignLabelWithHint: true,
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  for (final s in suggestions)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text("• $s"),
-                    ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // 🧠 Chọn cảm xúc thủ công
-            const Text(
-              "Tâm trạng hôm nay:",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildMoodButton('😊', 'Tích cực 😊'),
-                _buildMoodButton('😢', 'Tiêu cực 😞'),
-                _buildMoodButton('😐', 'Bình thường 😌'),
-                _buildMoodButton('😠', 'Bực 😠'),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // 📝 Ô nhập tiêu đề
-            TextField(
-              controller: _titleController,
-              onTapOutside: (_) =>
-                  FocusScope.of(context).unfocus(), //onTapOutside
-              decoration: const InputDecoration(
-                labelText: 'Tiêu đề',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // 📔 Ô nhập nội dung
-            Expanded(
-              child: TextField(
-                controller: _contentController,
-                onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                maxLines: null,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
-                decoration: const InputDecoration(
-                  labelText: 'Nội dung nhật ký',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
