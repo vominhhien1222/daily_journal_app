@@ -28,6 +28,9 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSUserNotificationUsageDescription</key>
+    <string>Ứng dụng cần quyền thông báo để nhắc nhở bạn viết nhật ký hằng ngày.</string>
+
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

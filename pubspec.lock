@@ -233,14 +233,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.11"
-  equatable:
-    dependency: transitive
-    description:
-      name: equatable
-      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.7"
   fake_async:
     dependency: transitive
     description:
@@ -423,10 +415,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_timezone
-      sha256: ccad42fbb5d01d51d3eb281cc4428fca556cc4063c52bd9fa40f80cd93b8e649
+      sha256: f9c328f66d58cd2af8a0cbd2f84d0c211fda8b7332b5e458d9848bd9ec936120
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.0"
+    version: "2.0.1"
   flutter_web_plugins:
     dependency: transitive
     description: flutter

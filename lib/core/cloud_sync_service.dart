@@ -1,18 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/models/journal_entry.dart';
-import 'package:hive/hive.dart';
+//import 'package:hive/hive.dart';
 import '../data/hive_boxes.dart';
 import 'auth_service.dart';
 
-/// ☁️ Quản lý đồng bộ dữ liệu giữa Hive (local) và Firestore (cloud)
 class CloudSyncService {
   final _firestore = FirebaseFirestore.instance;
   final _authService = AuthService();
 
-  /// 🔼 Upload toàn bộ entries từ Hive lên Firestore
   Future<void> uploadAll() async {
     final user = _authService.currentUser;
-    final userId = user?.uid ?? "testuser123"; // ✅ fallback ID khi chưa login
+    final userId = user?.uid ?? "testuser123";
 
     final box = HiveBoxes.journal;
     print("☁️ Bắt đầu upload (${box.values.length} entries)");
@@ -34,7 +32,6 @@ class CloudSyncService {
     print("☁️ Upload thành công tất cả nhật ký lên Firestore");
   }
 
-  /// 🔽 Tải tất cả entries từ Firestore về Hive (nếu chưa có hoặc cũ hơn)
   Future<void> downloadAll() async {
     final user = _authService.currentUser;
     final userId = user?.uid ?? "testuser123";
@@ -80,7 +77,6 @@ class CloudSyncService {
     print("☁️ Đã tải dữ liệu Firestore về Hive");
   }
 
-  /// 🔄 Đồng bộ 2 chiều (upload + download)
   Future<void> syncAll() async {
     print("🔁 Bắt đầu đồng bộ...");
     await uploadAll();
