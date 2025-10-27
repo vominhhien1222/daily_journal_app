@@ -113,7 +113,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final suggestions = PromptSuggestions.randomSuggestions();
+    final suggestions = PromptSuggestions.getSuggestions(_selectedMood);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

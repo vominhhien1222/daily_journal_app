@@ -1,20 +1,36 @@
-import 'dart:math';
+// 'dart:math';
 
 class PromptSuggestions {
-  static final List<String> _prompts = [
-    "Điều gì khiến bạn mỉm cười hôm nay? 😊",
-    "Ai là người khiến bạn thấy biết ơn nhất hiện tại?",
-    "Một điều nhỏ khiến bạn hạnh phúc hôm nay là gì?",
-    "Nếu được quay lại hôm nay, bạn muốn làm điều gì khác?",
-    "Bạn học được gì từ một khó khăn gần đây?",
-    "Hôm nay bạn dành thời gian cho bản thân như thế nào?",
-    "Khoảnh khắc đáng nhớ nhất trong ngày là gì?",
-    "Nếu mô tả hôm nay bằng 3 từ, đó sẽ là gì?",
-  ];
+  ///
+  static const Map<String, List<String>> _moodPrompts = {
+    'Tích cực 😊': [
+      'Hôm nay điều gì khiến bạn cảm thấy biết ơn nhất?',
+      'Bạn đã đạt được điều gì khiến mình tự hào?',
+      'Khoảnh khắc vui nhất trong ngày là gì?',
+    ],
+    'Tiêu cực 😞': [
+      'Chuyện gì khiến bạn buồn hôm nay?',
+      'Bạn có thể học được điều gì từ cảm xúc này?',
+      'Điều gì sẽ giúp bạn cảm thấy khá hơn vào ngày mai?',
+    ],
+    'Bình thường 😌': [
+      'Ngày hôm nay trôi qua thế nào?',
+      'Có điều gì nhỏ bé khiến bạn mỉm cười không?',
+      'Nếu chấm điểm ngày hôm nay, bạn sẽ cho bao nhiêu điểm?',
+    ],
+    'Bực 😠': [
+      'Điều gì khiến bạn bực mình hôm nay?',
+      'Cảm xúc này đến từ đâu, bạn có thể kiểm soát nó không?',
+      'Lần tới nếu gặp lại tình huống này, bạn sẽ phản ứng khác đi chứ?',
+    ],
+  };
 
-  /// 🔀 Lấy ngẫu nhiên [count] gợi ý
-  static List<String> randomSuggestions([int count = 3]) {
-    _prompts.shuffle(Random());
-    return _prompts.take(count).toList();
+  /// 🔁 Trả về danh sách gợi ý tương ứng với cảm xúc (hoặc mặc định nếu chưa chọn)
+  static List<String> getSuggestions(String? mood) {
+    if (mood != null && _moodPrompts.containsKey(mood)) {
+      return _moodPrompts[mood]!;
+    }
+    // Nếu chưa chọn cảm xúc → mặc định là "Bình thường"
+    return _moodPrompts['Bình thường 😌']!;
   }
 }
