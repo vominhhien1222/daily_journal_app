@@ -95,4 +95,21 @@ final vintageDarkTheme = ThemeData(
       fontWeight: FontWeight.w700,
     ),
   ),
+  // 💬 FIX phần ô nhập bị chìm chữ
+  inputDecorationTheme: const InputDecorationTheme(
+    labelStyle: TextStyle(color: Color(0xFFE8D8C3)),
+    hintStyle: TextStyle(color: Color(0xFFD6C4A3)),
+    filled: true,
+    fillColor: Color(0xFF3B2A24),
+    border: OutlineInputBorder(
+      borderSide: BorderSide(color: Color(0xFFC19A6B)),
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Color(0xFFC19A6B)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Color(0xFFFFD68A), width: 2),
+    ),
+  ),
 );

@@ -175,6 +175,8 @@ class _EditorScreenState extends State<EditorScreen> {
             // 📝 Ô nhập tiêu đề
             TextField(
               controller: _titleController,
+              onTapOutside: (_) =>
+                  FocusScope.of(context).unfocus(), //onTapOutside
               decoration: const InputDecoration(
                 labelText: 'Tiêu đề',
                 border: OutlineInputBorder(),
@@ -186,6 +188,7 @@ class _EditorScreenState extends State<EditorScreen> {
             Expanded(
               child: TextField(
                 controller: _contentController,
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 maxLines: null,
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
