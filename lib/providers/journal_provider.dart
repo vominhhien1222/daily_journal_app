@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../data/models/journal_entry.dart';
 import '../repositories/journal_repository.dart';
 import '../core/emotion_analyzer.dart';
@@ -34,9 +35,9 @@ class JournalProvider extends ChangeNotifier {
       content: content,
       date: now,
       mood: mood,
-      emotion: mood, // ✅ thay vì null
-      createdAt: now, // ✅ không được để null
-      updatedAt: now, // ✅ không được để null
+      emotion: mood,
+      createdAt: now,
+      updatedAt: now,
     );
 
     await _repo.addEntry(entry);
@@ -46,7 +47,7 @@ class JournalProvider extends ChangeNotifier {
 
   /// 🟢 Cập nhật
   Future<void> updateEntry(JournalEntry entry) async {
-    entry.updatedAt = DateTime.now(); // ✅ cập nhật thời gian sửa đổi
+    entry.updatedAt = DateTime.now();
     await _repo.updateEntry(entry);
     await loadEntries();
   }
@@ -56,5 +57,23 @@ class JournalProvider extends ChangeNotifier {
     await _repo.deleteEntry(id);
     _entries.removeWhere((e) => e.id == id);
     notifyListeners();
+  }
+
+  JournalEntry? entryOf(DateTime day) {
+    try {
+      return _entries.firstWhere((e) => isSameDay(e.dateOnly, day));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  ///Gom các bài viết theo ngày (dùng cho TableCalendar marker)
+  Map<DateTime, List<JournalEntry>> get entriesByDay {
+    final Map<DateTime, List<JournalEntry>> map = {};
+    for (final e in _entries) {
+      final date = e.dateOnly;
+      map[date] = [...(map[date] ?? []), e];
+    }
+    return map;
   }
 }

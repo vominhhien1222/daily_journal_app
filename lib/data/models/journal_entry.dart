@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:flutter/material.dart'; // 👈 để dùng Color
 
 part 'journal_entry.g.dart'; // 🧠 Giữ nguyên, dùng cho build_runner
 
@@ -51,5 +52,31 @@ class JournalEntry extends HiveObject {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
+  }
+
+  ///Trả về ngày không kèm giờ (dùng để so sánh chính xác trên lịch)
+  DateTime get dateOnly => DateTime(date.year, date.month, date.day);
+
+  ///Màu cảm xúc (dùng để hiển thị chấm màu trên Calendar)
+  Color get moodColor {
+    switch (emotion.toLowerCase()) {
+      case 'happy':
+      case 'vui':
+        return Colors.yellow.shade600;
+      case 'sad':
+      case 'buồn':
+        return Colors.blue.shade400;
+      case 'angry':
+      case 'giận':
+        return Colors.red.shade400;
+      case 'calm':
+      case 'bình yên':
+        return Colors.green.shade400;
+      case 'anxious':
+      case 'lo lắng':
+        return Colors.orange.shade400;
+      default:
+        return Colors.grey.shade400;
+    }
   }
 }
