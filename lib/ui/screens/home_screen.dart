@@ -19,18 +19,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isSyncing = false;
-  bool _isCalendarView = false; // 🔁 Chuyển giữa 2 chế độ
+  bool _isCalendarView = false;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
-    _loadViewMode(); // 🔄 đọc chế độ lưu trước đó
+    _loadViewMode();
     _autoSyncCloud();
   }
 
-  /// ☁️ Tự động đồng bộ dữ liệu khi mở app
+  /// ☁️ Đồng bộ Firestore khi mở app
   Future<void> _autoSyncCloud() async {
     setState(() => _isSyncing = true);
     try {
@@ -45,19 +45,18 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      debugPrint("❌ Lỗi khi đồng bộ: $e");
+      debugPrint("❌ Lỗi đồng bộ: $e");
     } finally {
       setState(() => _isSyncing = false);
     }
   }
 
-  /// 💾 Đọc chế độ xem từ SharedPreferences
+  /// 💾 Lưu & đọc chế độ xem
   Future<void> _loadViewMode() async {
     final saved = await PrefsService.loadViewMode();
     setState(() => _isCalendarView = saved);
   }
 
-  /// 💾 Lưu chế độ xem
   Future<void> _saveViewMode(bool isCalendar) async {
     await PrefsService.saveViewMode(isCalendar);
   }
@@ -71,13 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: theme.appBarTheme.backgroundColor,
         title: Text(
           'My Vintage Journal ☕',
           style: GoogleFonts.dancingScript(
             fontSize: 30,
             fontWeight: FontWeight.w600,
-            color: theme.appBarTheme.iconTheme?.color ?? Colors.brown,
+            color: Colors.brown.shade700,
           ),
         ),
         centerTitle: true,
@@ -95,35 +93,27 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, anim) => RotationTransition(
-                turns: Tween(begin: 0.7, end: 1.0).animate(anim),
-                child: child,
-              ),
+              transitionBuilder: (child, anim) =>
+                  RotationTransition(turns: anim, child: child),
               child: Icon(
                 _isCalendarView ? Icons.list_alt : Icons.calendar_month,
                 key: ValueKey(_isCalendarView),
-                color: theme.appBarTheme.iconTheme?.color ?? Colors.brown,
+                color: Colors.brown,
               ),
             ),
-            tooltip: _isCalendarView ? 'Xem danh sách' : 'Xem lịch (Calendar)',
+            tooltip: _isCalendarView ? 'Xem danh sách' : 'Xem lịch',
             onPressed: () {
               setState(() => _isCalendarView = !_isCalendarView);
               _saveViewMode(_isCalendarView);
             },
           ),
           IconButton(
-            icon: Icon(
-              Icons.settings,
-              color: theme.appBarTheme.iconTheme?.color ?? Colors.brown,
-            ),
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
+            icon: const Icon(Icons.settings, color: Colors.brown),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
 
-      // 🔄 AnimatedSwitcher để chuyển giữa 2 giao diện
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 500),
         child: _isCalendarView
@@ -132,15 +122,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        backgroundColor:
-            theme.floatingActionButtonTheme.backgroundColor ??
-            const Color(0xFF8B5E3C),
+        backgroundColor: const Color(0xFF8B5E3C),
         onPressed: () async {
           await Navigator.push(
             context,
             PageTransition(
               type: PageTransitionType.rightToLeft,
-              duration: const Duration(milliseconds: 600),
+              duration: const Duration(milliseconds: 500),
               child: const EditorScreen(),
             ),
           );
@@ -152,70 +140,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 📜 Dạng 1: Danh sách nhật ký
+  /// 📜 Dạng 1: Danh sách
   Widget _buildListView(
     BuildContext context,
     List<JournalEntry> entries,
     ThemeData theme,
   ) {
     if (entries.isEmpty) return _buildEmptyState(theme);
-
     return ListView.builder(
       key: const ValueKey('list_view'),
       padding: const EdgeInsets.all(16),
       itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        return _buildJournalItem(context, entry, theme);
-      },
+      itemBuilder: (context, i) =>
+          _buildJournalItem(context, entries[i], theme),
     );
   }
 
-  /// 🗓️ Dạng 2: Calendar View
+  /// 🗓️ Dạng 2: Lịch
   Widget _buildCalendarView(
     BuildContext context,
     List<JournalEntry> entries,
     ThemeData theme,
   ) {
     final daysWithEntries = entries.map((e) => e.dateOnly).toList();
-
-    // 📊 Đếm số ngày có bài trong tháng hiện tại
-    final int writtenDays = daysWithEntries
+    final writtenDays = daysWithEntries
         .where(
           (d) => d.year == _focusedDay.year && d.month == _focusedDay.month,
         )
         .length;
-    final int totalDaysInMonth = DateUtils.getDaysInMonth(
+    final totalDays = DateUtils.getDaysInMonth(
       _focusedDay.year,
       _focusedDay.month,
     );
 
     return Column(
-      key: const ValueKey('calendar_view'),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _focusedDay = DateTime.now();
-                    _selectedDay = DateTime.now();
-                  });
-                },
-                icon: const Icon(Icons.today, size: 18),
-                label: const Text("Hôm nay"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B5E3C),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: () {
+            setState(() {
+              _focusedDay = DateTime.now();
+              _selectedDay = DateTime.now();
+            });
+          },
+          icon: const Icon(Icons.today),
+          label: const Text("Hôm nay"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF8B5E3C),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
         TableCalendar(
@@ -228,138 +203,278 @@ class _HomeScreenState extends State<HomeScreen> {
             formatButtonVisible: false,
             titleTextStyle: GoogleFonts.cormorant(
               fontSize: 20,
-              color: Colors.brown.shade700,
               fontWeight: FontWeight.bold,
+              color: Colors.brown,
             ),
           ),
-          daysOfWeekStyle: DaysOfWeekStyle(
-            weekendStyle: TextStyle(color: Colors.red.shade400),
-            weekdayStyle: const TextStyle(color: Colors.brown),
+          daysOfWeekStyle: const DaysOfWeekStyle(
+            weekdayStyle: TextStyle(color: Colors.brown),
+            weekendStyle: TextStyle(color: Colors.red),
           ),
           calendarStyle: CalendarStyle(
-            selectedDecoration: BoxDecoration(
-              color: Colors.brown.shade400,
+            selectedDecoration: const BoxDecoration(
+              color: Colors.brown,
               shape: BoxShape.circle,
             ),
-            todayDecoration: BoxDecoration(
-              color: Colors.orange.shade400,
+            todayDecoration: const BoxDecoration(
+              color: Colors.orange,
               shape: BoxShape.circle,
             ),
-            markersMaxCount: 1,
           ),
           onDaySelected: (selectedDay, focusedDay) {
             setState(() {
               _selectedDay = selectedDay;
               _focusedDay = focusedDay;
             });
-
-            final entry = entries.firstWhere(
-              (e) => isSameDay(e.dateOnly, selectedDay),
-              orElse: () => JournalEntry.empty(),
-            );
-            if (entry.id.isNotEmpty) {
-              Navigator.push(
-                context,
-                PageTransition(
-                  type: PageTransitionType.fade,
-                  duration: const Duration(milliseconds: 400),
-                  child: DetailScreen(entry: entry),
-                ),
-              );
-            }
+            _handleDayTap(context, selectedDay, entries);
           },
           calendarBuilders: CalendarBuilders(
             markerBuilder: (context, date, _) {
-              final hasEntry = daysWithEntries.contains(date);
-              if (hasEntry) {
-                final entry = entries.firstWhere(
-                  (e) => isSameDay(e.dateOnly, date),
-                );
-                return AnimatedScale(
-                  duration: const Duration(milliseconds: 300),
-                  scale: isSameDay(date, _selectedDay) ? 1.4 : 1.0,
-                  child: CircleAvatar(
-                    radius: 3.5,
-                    backgroundColor: entry.moodColor,
-                  ),
+              final dayEntries = entries
+                  .where((e) => isSameDay(e.dateOnly, date))
+                  .toList();
+              if (dayEntries.isEmpty) return null;
+              if (dayEntries.length == 1) {
+                return CircleAvatar(
+                  radius: 3.5,
+                  backgroundColor: dayEntries.first.moodColor,
                 );
               }
-              return null;
+              return Container(
+                margin: const EdgeInsets.only(top: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.brown,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${dayEntries.length}',
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+              );
             },
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Text(
-          '🗓️ $writtenDays / $totalDaysInMonth ngày đã viết trong tháng này',
+          '🗓️ $writtenDays / $totalDays ngày đã viết',
           style: GoogleFonts.cormorant(
-            fontSize: 17,
+            fontSize: 16,
             fontStyle: FontStyle.italic,
-            color: theme.colorScheme.onBackground.withOpacity(0.7),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          '📅 Chọn ngày có chấm để xem nhật ký',
-          style: GoogleFonts.cormorant(
-            fontSize: 15,
-            color: theme.colorScheme.onBackground.withOpacity(0.7),
-            fontStyle: FontStyle.italic,
+            color: Colors.brown.shade700,
           ),
         ),
       ],
     );
   }
 
-  /// 🪶 Khi chưa có nhật ký
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.menu_book,
-              color: theme.colorScheme.onBackground.withOpacity(0.6),
-              size: 80,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Chưa có nhật ký nào 😌\nNhấn dấu + để viết nhé!',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.cormorant(
-                fontSize: 20,
-                color: theme.colorScheme.onBackground.withOpacity(0.8),
-                fontStyle: FontStyle.italic,
+  /// 📅 Khi bấm 1 ngày
+  void _handleDayTap(
+    BuildContext context,
+    DateTime day,
+    List<JournalEntry> all,
+  ) {
+    final sameDayEntries = all.where((e) => isSameDay(e.dateOnly, day)).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    if (sameDayEntries.isEmpty || sameDayEntries.length > 1) {
+      _showDayEntriesSheet(context, day, sameDayEntries);
+    } else {
+      Navigator.push(
+        context,
+        PageTransition(
+          type: PageTransitionType.fade,
+          duration: const Duration(milliseconds: 400),
+          child: DetailScreen(entry: sameDayEntries.first),
+        ),
+      );
+    }
+  }
+
+  /// 🧾 Hiện danh sách bài trong ngày (bottom sheet)
+  void _showDayEntriesSheet(
+    BuildContext context,
+    DateTime day,
+    List<JournalEntry> entries,
+  ) {
+    final theme = Theme.of(context);
+    final dateStr =
+        '${day.day.toString().padLeft(2, '0')}/${day.month.toString().padLeft(2, '0')}/${day.year}';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFF5E5C0),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            top: 10,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.brown.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                'Nhật ký ngày $dateStr',
+                style: GoogleFonts.cormorant(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.brown.shade700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (entries.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Chưa có bài nào. Viết một chút nhé?',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.cormorant(
+                      fontSize: 17,
+                      fontStyle: FontStyle.italic,
+                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              if (entries.isNotEmpty)
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: entries.length,
+                    itemBuilder: (_, i) {
+                      final e = entries[i];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: _getMoodColor(e.mood),
+                          child: Text(
+                            e.mood.characters.first.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          e.title,
+                          style: GoogleFonts.dancingScript(
+                            fontSize: 22,
+                            color: Colors.brown,
+                          ),
+                        ),
+                        subtitle: Text(
+                          e.content,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.cormorant(
+                            color: Colors.brown.shade600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            PageTransition(
+                              type: PageTransitionType.fade,
+                              child: DetailScreen(entry: e),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Tạo nhật ký mới'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B5E3C),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await Navigator.push(
+                      context,
+                      PageTransition(
+                        type: PageTransitionType.rightToLeft,
+                        child: const EditorScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /// ✏️ Item từng dòng nhật ký
+  /// Khi chưa có bài
+  Widget _buildEmptyState(ThemeData theme) => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.menu_book,
+          color: theme.colorScheme.onBackground.withOpacity(0.6),
+          size: 80,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Chưa có nhật ký nào 😌\nNhấn dấu + để viết nhé!',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.cormorant(
+            fontSize: 20,
+            fontStyle: FontStyle.italic,
+            color: theme.colorScheme.onBackground.withOpacity(0.8),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  /// Item danh sách
   Widget _buildJournalItem(
     BuildContext context,
     JournalEntry entry,
     ThemeData theme,
   ) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          PageTransition(
-            type: PageTransitionType.fade,
-            duration: const Duration(milliseconds: 400),
-            child: DetailScreen(entry: entry),
-          ),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        PageTransition(
+          type: PageTransitionType.fade,
+          child: DetailScreen(entry: entry),
+        ),
+      ),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: theme.cardTheme.color ?? const Color(0xFFF5E5C0),
+          color: const Color(0xFFF5E5C0),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -370,10 +485,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 8,
-          ),
           leading: CircleAvatar(
             backgroundColor: _getMoodColor(entry.mood),
             child: Text(
@@ -388,17 +499,14 @@ class _HomeScreenState extends State<HomeScreen> {
             entry.title,
             style: GoogleFonts.dancingScript(
               fontSize: 24,
-              color: theme.textTheme.titleLarge?.color ?? Colors.brown,
-              fontWeight: FontWeight.w500,
+              color: Colors.brown.shade800,
             ),
           ),
           subtitle: Text(
             '${entry.date.day}/${entry.date.month}/${entry.date.year}',
             style: GoogleFonts.cormorant(
-              fontSize: 18,
-              color:
-                  theme.textTheme.bodyMedium?.color?.withOpacity(0.8) ??
-                  Colors.brown.shade600,
+              fontSize: 17,
+              color: Colors.brown.shade600,
             ),
           ),
         ),
@@ -414,7 +522,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return Colors.blue.shade300;
       case 'angry':
         return Colors.red.shade300;
-      case 'neutral':
       default:
         return Colors.grey.shade400;
     }
